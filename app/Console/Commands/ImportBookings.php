@@ -7,6 +7,7 @@ use App\Models\Guest;
 use App\Models\Booking;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ImportBookings extends Command
 {
@@ -69,13 +70,21 @@ class ImportBookings extends Command
                         return Guest::firstOrCreate(['name' => $data['guestname'], 'phonenumber' => $phoneNumber, 'country' => $data['country']]);
                     });
 
-                    $booking = Booking::firstOrNew(['room_id' => $room->id, 'checkin' => date('Y-m-d', strtotime($data['checkin']))]);
+                    $checkinDate = date('Y-m-d', strtotime($data['checkin']));
+                    $checkoutDate = date('Y-m-d', strtotime($data['checkout']));
+                    $booking = Booking::firstOrNew(['room_id' => $room->id, 'checkin' => $checkinDate]);
+                    if($checkinDate > $checkoutDate)
+                    {
+                        Log::warning('Checkin date is greater than checkout date');
+                        continue;
+                    }
                     if($booking->id) {
                         $this->error('Booking overlap');
                         continue;
                     }
+                    
                     $booking->guest_id = $guest->id;
-                    $booking->checkout = date('Y-m-d', strtotime($data['checkout']));
+                    $booking->checkout = $checkoutDate;
                     $booking->save();
                 }  
             }
