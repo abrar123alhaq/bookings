@@ -69,13 +69,13 @@ class ImportBookings extends Command
                         return Guest::firstOrCreate(['name' => $data['guestname'], 'phonenumber' => $phoneNumber, 'country' => $data['country']]);
                     });
 
-                    $booking = Booking::firstOrNew(['room_id' => $room->id, 'checkin' => $data['checkin']]);
+                    $booking = Booking::firstOrNew(['room_id' => $room->id, 'checkin' => date('Y-m-d', strtotime($data['checkin']))]);
                     if($booking->id) {
                         $this->error('Booking overlap');
                         continue;
                     }
                     $booking->guest_id = $guest->id;
-                    $booking->checkout = $data['checkout'];
+                    $booking->checkout = date('Y-m-d', strtotime($data['checkout']));
                     $booking->save();
                 }  
             }
